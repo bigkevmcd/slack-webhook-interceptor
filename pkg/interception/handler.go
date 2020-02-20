@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"k8s.io/client-go/kubernetes"
 )
 
 const (
@@ -20,8 +22,17 @@ const (
 // TODO validate the shared secret
 // TODO: add some logging.
 
+func NewHandler(c *kubernetes.Clientset) *SlackDecoder {
+	return &SlackDecoder{client: c}
+}
+
+// SlackDecoder implements the http.Handler interface and handles form-decoding.
+type SlackDecoder struct {
+	client *kubernetes.Clientset
+}
+
 // Handler processes interception requests.
-func Handler(w http.ResponseWriter, r *http.Request) {
+func (d SlackDecoder) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Dirty Hack until this lands https://github.com/tektoncd/triggers/pull/438
 	// Tekton Triggers is stripping the method, which means the data isn't being
 	// treated as a POST, and so ParseForm() isn't seeing the body.
