@@ -1,0 +1,10 @@
+apiVersion: tekton.dev/v1alpha1
+kind: TriggerBinding
+metadata:
+  name: task-run-binding
+spec:
+  params:
+  - name: command
+    value: $(body.slack.command)
+  - name: text
+    value: $(body.slack.text)

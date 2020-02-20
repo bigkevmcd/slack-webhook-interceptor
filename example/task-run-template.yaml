@@ -1,0 +1,24 @@
+apiVersion: tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+  name: task-run-template
+spec:
+  params:
+  - name: command
+    description: The command from slack
+  - name: text
+    description: The text after the command from slack
+  resourcetemplates:
+  - apiVersion: tekton.dev/v1alpha1
+    kind: TaskRun
+    metadata:
+      generateName: slack-task-run-
+    spec:
+      taskRef:
+        name: slack-webhook-task
+      inputs:
+        params:
+        - name: command
+          value: $(params.command)
+        - name: text
+          value: $(params.text)

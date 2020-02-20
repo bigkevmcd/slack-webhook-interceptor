@@ -1,0 +1,16 @@
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: slack-webhook-task
+spec:
+  inputs:
+    params:
+    - name: command
+      description: the command from slack
+    - name: text
+      description: the text from slack - the bit after the command
+  steps:
+  - image: registry.access.redhat.com/ubi8/ubi-minimal
+    script: |
+        #!/usr/bin/env bash
+        echo $(inputs.params.command) $(inputs.params.text)

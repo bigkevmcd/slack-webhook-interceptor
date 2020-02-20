@@ -1,0 +1,25 @@
+apiVersion: tekton.dev/v1alpha1
+kind: EventListener
+metadata:
+  name: listener-interceptor
+spec:
+  triggers:
+    - name: foo-trig
+      interceptors:
+        - webhook:
+            header:
+              - name: Slack-Decodeprefix
+                value: slack
+              - name:  Slack-Decodeflatten
+                value: "true"
+            objectRef:
+              kind: Service
+              name: slack-webhook-interceptor
+              apiVersion: v1
+              namespace: default
+        - cel:
+            filter: body.slack.command == '/build'
+      binding:
+        name: task-run-binding
+      template:
+        name: task-run-template
