@@ -12,9 +12,9 @@ const (
 	mimeJSON = "application/json"
 	mimeForm = "application/x-www-form-urlencoded"
 
-	prefixHeader  = "Slack-Decodeprefix"
-	flattenHeader = "Slack-Decodeflatten"
-	defaultPrefix = "intercepted"
+	prefixHeader    = "Slack-Decodeprefix"
+	noFlattenHeader = "Slack-Decodenoflatten"
+	defaultPrefix   = "intercepted"
 )
 
 // TODO validate the shared secret
@@ -33,9 +33,9 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", mimeJSON)
-	var data interface{} = r.PostForm
-	if flatten(r) {
-		data = flattenMap(r.PostForm)
+	var data interface{} = flattenMap(r.PostForm)
+	if noFlatten(r) {
+		data = r.PostForm
 	}
 	response := map[string]interface{}{prefixFromRequest(r): data}
 	payload, err := json.Marshal(response)
@@ -55,8 +55,8 @@ func prefixFromRequest(r *http.Request) string {
 	return v
 }
 
-func flatten(r *http.Request) bool {
-	return strings.ToLower(r.Header.Get(flattenHeader)) == "true"
+func noFlatten(r *http.Request) bool {
+	return strings.ToLower(r.Header.Get(noFlattenHeader)) == "true"
 }
 
 func flattenMap(m url.Values) map[string]string {

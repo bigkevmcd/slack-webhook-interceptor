@@ -20,48 +20,50 @@ func TestHandlerProcessingBodySuccessfully(t *testing.T) {
 		want    []byte
 	}{
 		{
-			name:    "unflattened body no prefix header",
-			headers: map[string]string{"Content-Type": mimeForm},
-			payload: ioutil.NopCloser(bytes.NewBufferString(`field1=value1&field2=value2`)),
-			want:    []byte(`{"intercepted":{"field1":["value1"],"field2":["value2"]}}`),
-		},
-		{
 			name:    "flattened body no prefix header",
-			headers: map[string]string{"Content-Type": mimeForm, flattenHeader: "true"},
+			headers: map[string]string{"Content-Type": mimeForm},
 			payload: ioutil.NopCloser(bytes.NewBufferString(`field1=value1&field2=value2`)),
 			want:    []byte(`{"intercepted":{"field1":"value1","field2":"value2"}}`),
 		},
 		{
 			name:    "flattened body with prefix header",
-			headers: map[string]string{"Content-Type": mimeForm, prefixHeader: "slack", flattenHeader: "true"},
+			headers: map[string]string{"Content-Type": mimeForm, prefixHeader: "slack"},
 			payload: ioutil.NopCloser(bytes.NewBufferString(`field1=value1&field2=value2`)),
 			want:    []byte(`{"slack":{"field1":"value1","field2":"value2"}}`),
+		},
+		{
+			name:    "unflattened body no prefix header",
+			headers: map[string]string{"Content-Type": mimeForm, noFlattenHeader: "true"},
+			payload: ioutil.NopCloser(bytes.NewBufferString(`field1=value1&field2=value2`)),
+			want:    []byte(`{"intercepted":{"field1":["value1"],"field2":["value2"]}}`),
 		},
 	}
 
 	for _, tt := range bodyTests {
-		r, _ := http.NewRequest("POST", "/", tt.payload)
-		for k, v := range tt.headers {
-			r.Header.Add(k, v)
-		}
-		w := httptest.NewRecorder()
+		t.Run(tt.name, func(t *testing.T) {
+			r, _ := http.NewRequest("POST", "/", tt.payload)
+			for k, v := range tt.headers {
+				r.Header.Add(k, v)
+			}
+			w := httptest.NewRecorder()
 
-		Handler(w, r)
+			Handler(w, r)
 
-		resp := w.Result()
-		if resp.StatusCode != http.StatusOK {
-			t.Errorf("unexpected status code, got %d, wanted %d", resp.StatusCode, http.StatusOK)
-		}
-		if ct := resp.Header.Get("Content-Type"); ct != "application/json" {
-			t.Errorf("Content-Type incorrect, got %s, wanted %s", ct, "application/json")
-		}
-		respBody, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if !reflect.DeepEqual(respBody, tt.want) {
-			t.Errorf("decoded response: got %s, wanted %s\n", respBody, tt.want)
-		}
+			resp := w.Result()
+			if resp.StatusCode != http.StatusOK {
+				t.Errorf("unexpected status code, got %d, wanted %d", resp.StatusCode, http.StatusOK)
+			}
+			if ct := resp.Header.Get("Content-Type"); ct != "application/json" {
+				t.Errorf("Content-Type incorrect, got %s, wanted %s", ct, "application/json")
+			}
+			respBody, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(respBody, tt.want) {
+				t.Errorf("decoded response: got %s, wanted %s\n", respBody, tt.want)
+			}
+		})
 	}
 }
 
