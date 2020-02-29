@@ -7,10 +7,12 @@ spec:
     params:
     - name: command
       description: the command from slack
-    - name: text
-      description: the text from slack - the bit after the command
+    - name: repo
+      description: the repo to process
+    - name: sha
+      description: the specific SHA in the repo
   steps:
   - image: registry.access.redhat.com/ubi8/ubi-minimal
     script: |
         #!/usr/bin/env bash
-        echo $(inputs.params.command) $(inputs.params.text)
+        echo $(inputs.params.command) $(inputs.params.repo) $(inputs.params.sha)

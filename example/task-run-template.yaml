@@ -6,8 +6,10 @@ spec:
   params:
   - name: command
     description: The command from slack
-  - name: text
-    description: The text after the command from slack
+  - name: repo
+    description: The repo to process.
+  - name: sha
+    description: The specific commit (SHA) to process.
   resourcetemplates:
   - apiVersion: tekton.dev/v1alpha1
     kind: TaskRun
@@ -20,5 +22,7 @@ spec:
         params:
         - name: command
           value: $(params.command)
-        - name: text
-          value: $(params.text)
+        - name: repo
+          value: $(params.repo)
+        - name: sha
+          value: $(params.sha)

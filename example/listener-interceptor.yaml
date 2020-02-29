@@ -10,8 +10,6 @@ spec:
             header:
               - name: Slack-Decodeprefix
                 value: slack
-              - name:  Slack-Decodeflatten
-                value: "true"
             objectRef:
               kind: Service
               name: slack-webhook-interceptor
@@ -19,7 +17,14 @@ spec:
               namespace: default
         - cel:
             filter: body.slack.command == '/build'
-      binding:
-        name: task-run-binding
+            overlays:
+            - key: slack.repo
+              expression: "split(body.slack.text, ' ')[0]"
+            - key: slack.sha
+              expression: "split(body.slack.text, ' ')[1]"
+            - key: slack.command
+              expression: "split(body.slack.command, '/')[1]"
+      bindings:
+        - name: task-run-binding
       template:
         name: task-run-template

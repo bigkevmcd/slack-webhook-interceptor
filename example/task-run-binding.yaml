@@ -6,5 +6,7 @@ spec:
   params:
   - name: command
     value: $(body.slack.command)
-  - name: text
-    value: $(body.slack.text)
+  - name: repo
+    value: $(body.slack.repo)
+  - name: sha
+    value: $(body.slack.sha)
