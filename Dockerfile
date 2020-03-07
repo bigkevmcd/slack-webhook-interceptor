@@ -1,7 +1,7 @@
 FROM golang:latest AS build
 WORKDIR /go/src
 COPY . /go/src
-RUN go build -o interceptor ./cmd/interceptor
+RUN go build ./cmd/interceptor
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal
 WORKDIR /root/
