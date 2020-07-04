@@ -12,9 +12,10 @@ const (
 	mimeJSON = "application/json"
 	mimeForm = "application/x-www-form-urlencoded"
 
-	prefixHeader    = "Slack-Decodeprefix"
-	noFlattenHeader = "Slack-Decodenoflatten"
-	defaultPrefix   = "intercepted"
+	prefixHeader         = "Slack-Decodeprefix"
+	noFlattenHeader      = "Slack-Decodenoflatten"
+	extractPayloadHeader = "Slack-Payload"
+	defaultPrefix        = "intercepted"
 )
 
 // TODO validate the shared secret
@@ -33,6 +34,18 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", mimeJSON)
+
+	if payloadExtract(r) {
+		myData := r.PostForm.Get("payload")
+		myData = "{\"" + prefixFromRequest(r) + "\":" + myData + "}"
+		w.Write([]byte(myData))
+
+		fmt.Println("Return payload extraction data as:")
+		fmt.Println(myData)
+
+		return
+	}
+
 	var data interface{} = flattenMap(r.PostForm)
 	if noFlatten(r) {
 		data = r.PostForm
@@ -44,6 +57,10 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 		writeErrorResponse(w, fmt.Sprintf("failed to marshal form data: %s", err.Error()))
 		return
 	}
+
+	fmt.Println("Returning response as:")
+	fmt.Println(string(payload))
+
 	w.Write(payload)
 }
 
@@ -57,6 +74,12 @@ func prefixFromRequest(r *http.Request) string {
 
 func noFlatten(r *http.Request) bool {
 	return strings.ToLower(r.Header.Get(noFlattenHeader)) == "true"
+}
+
+func payloadExtract(r *http.Request) bool {
+
+	return strings.ToLower(r.Header.Get(extractPayloadHeader)) == "true"
+	//return true
 }
 
 func flattenMap(m url.Values) map[string]string {
