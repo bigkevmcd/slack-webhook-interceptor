@@ -16,6 +16,10 @@ const (
 	noFlattenHeader      = "Slack-Decodenoflatten"
 	extractPayloadHeader = "Slack-Payload"
 	defaultPrefix        = "intercepted"
+
+	// the payload field as defined in interaction messages 
+	// as per here: https://api.slack.com/messaging/interactivity#understanding_payloads
+	slackPayloadField 	 = "payload"
 )
 
 // TODO validate the shared secret
@@ -35,21 +39,19 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", mimeJSON)
 
-	if payloadExtract(r) {
-		myData := r.PostForm.Get("payload")
-		myData = "{\"" + prefixFromRequest(r) + "\":" + myData + "}"
-		w.Write([]byte(myData))
+	var data interface{}
 
-		fmt.Println("Return payload extraction data as:")
-		fmt.Println(myData)
-
-		return
-	}
-
-	var data interface{} = flattenMap(r.PostForm)
-	if noFlatten(r) {
+	switch {
+	case payloadExtract(r):
+		// mark this string as already json encoded so that it doesn't get encoded again (e.g. quotes escaped out)
+		// when it goes through json.Marshal below
+		data = json.RawMessage(r.PostForm.Get(slackPayloadField))
+	case noFlatten(r):
 		data = r.PostForm
+	default:
+		data = flattenMap(r.PostForm)
 	}
+
 	response := map[string]interface{}{prefixFromRequest(r): data}
 	payload, err := json.Marshal(response)
 
