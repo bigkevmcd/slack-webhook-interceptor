@@ -17,9 +17,9 @@ const (
 	extractPayloadHeader = "Slack-Payload"
 	defaultPrefix        = "intercepted"
 
-	// the payload field as defined in interaction messages 
+	// the payload field as defined in interaction messages
 	// as per here: https://api.slack.com/messaging/interactivity#understanding_payloads
-	slackPayloadField 	 = "payload"
+	slackPayloadField = "payload"
 )
 
 // TODO validate the shared secret
@@ -79,9 +79,7 @@ func noFlatten(r *http.Request) bool {
 }
 
 func payloadExtract(r *http.Request) bool {
-
 	return strings.ToLower(r.Header.Get(extractPayloadHeader)) == "true"
-	//return true
 }
 
 func flattenMap(m url.Values) map[string]string {
