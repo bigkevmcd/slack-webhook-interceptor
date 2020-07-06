@@ -7,4 +7,4 @@ FROM registry.access.redhat.com/ubi8/ubi-minimal
 WORKDIR /root/
 COPY --from=build /go/src/interceptor .
 EXPOSE 8080
-CMD ["./interceptor"]
+ENTRYPOINT ["./interceptor"]
