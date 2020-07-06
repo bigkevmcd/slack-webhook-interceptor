@@ -37,6 +37,12 @@ func TestHandlerProcessingBodySuccessfully(t *testing.T) {
 			payload: ioutil.NopCloser(bytes.NewBufferString(`field1=value1&field2=value2`)),
 			want:    []byte(`{"intercepted":{"field1":["value1"],"field2":["value2"]}}`),
 		},
+		{
+			name:    "special payload parsing",
+			headers: map[string]string{"Content-Type": mimeForm, extractPayloadHeader: "true"},
+			payload: ioutil.NopCloser(bytes.NewBufferString(`field1=value1&payload={"field2":"value2","field3":["value3a","value3b"]}`)),
+			want:    []byte(`{"intercepted":{"field2":"value2","field3":["value3a","value3b"]}}`),
+		},
 	}
 
 	for _, tt := range bodyTests {
