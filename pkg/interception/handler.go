@@ -25,8 +25,11 @@ const (
 // TODO validate the shared secret
 // TODO: add some logging.
 
+// SlackHandler handles incoming Slack hooks.
+type SlackHandler struct{}
+
 // Handler processes interception requests.
-func Handler(w http.ResponseWriter, r *http.Request) {
+func (s SlackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		writeErrorResponse(w, fmt.Sprintf("failed to parse form data: %s", err))
