@@ -27,11 +27,6 @@ const (
 
 // Handler processes interception requests.
 func Handler(w http.ResponseWriter, r *http.Request) {
-	// Dirty Hack until this lands https://github.com/tektoncd/triggers/pull/438
-	// Tekton Triggers is stripping the method, which means the data isn't being
-	// treated as a POST, and so ParseForm() isn't seeing the body.
-	r.Method = http.MethodPost
-
 	err := r.ParseForm()
 	if err != nil {
 		writeErrorResponse(w, fmt.Sprintf("failed to parse form data: %s", err))
