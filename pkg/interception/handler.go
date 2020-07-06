@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"k8s.io/client-go/kubernetes"
 )
 
 const (
@@ -26,10 +28,13 @@ const (
 // TODO: add some logging.
 
 // SlackHandler handles incoming Slack hooks.
-type SlackHandler struct{}
+type SlackHandler struct {
+	secretName string
+	kubeClient kubernetes.Interface
+}
 
 // Handler processes interception requests.
-func (s SlackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (s *SlackHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseForm()
 	if err != nil {
 		writeErrorResponse(w, fmt.Sprintf("failed to parse form data: %s", err))

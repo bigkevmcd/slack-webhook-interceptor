@@ -10,6 +10,11 @@ import (
 	"reflect"
 	"regexp"
 	"testing"
+
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes/fake"
 )
 
 func TestHandlerProcessingBodySuccessfully(t *testing.T) {
@@ -18,6 +23,7 @@ func TestHandlerProcessingBodySuccessfully(t *testing.T) {
 		payload io.ReadCloser
 		headers map[string]string
 		want    []byte
+		secret  *corev1.Secret
 	}{
 		{
 			name:    "flattened body no prefix header",
@@ -43,6 +49,13 @@ func TestHandlerProcessingBodySuccessfully(t *testing.T) {
 			payload: ioutil.NopCloser(bytes.NewBufferString(`field1=value1&payload={"field2":"value2","field3":["value3a","value3b"]}`)),
 			want:    []byte(`{"intercepted":{"field2":"value2","field3":["value3a","value3b"]}}`),
 		},
+		{
+			name:    "valid secret",
+			headers: map[string]string{"Content-Type": mimeForm},
+			payload: ioutil.NopCloser(bytes.NewBufferString(`field1=value1&field2=value2`)),
+			want:    []byte(`{"intercepted":{"field1":"value1","field2":"value2"}}`),
+			secret:  makeSecret("secret-token"),
+		},
 	}
 
 	for _, tt := range bodyTests {
@@ -53,7 +66,7 @@ func TestHandlerProcessingBodySuccessfully(t *testing.T) {
 			}
 			w := httptest.NewRecorder()
 
-			SlackHandler{}.ServeHTTP(w, r)
+			makeHandler().ServeHTTP(w, r)
 
 			resp := w.Result()
 			if resp.StatusCode != http.StatusOK {
@@ -95,7 +108,7 @@ func TestHandlerProcessingBodyWithErrors(t *testing.T) {
 		}
 		w := httptest.NewRecorder()
 
-		SlackHandler{}.ServeHTTP(w, r)
+		makeHandler().ServeHTTP(w, r)
 
 		resp := w.Result()
 		if resp.StatusCode != http.StatusInternalServerError {
@@ -141,4 +154,26 @@ func matchError(t *testing.T, s string, e error) bool {
 		t.Fatal(err)
 	}
 	return match
+}
+
+func makeHandler(o ...runtime.Object) *SlackHandler {
+	fakeClient := fake.NewSimpleClientset()
+	return &SlackHandler{kubeClient: fakeClient}
+}
+
+func makeSecret(token string) *corev1.Secret {
+	return &corev1.Secret{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       "Secret",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      "tekton-ci-auth",
+			Namespace: "testing",
+		},
+		Type: corev1.SecretTypeOpaque,
+		Data: map[string][]byte{
+			"token": []byte(token),
+		},
+	}
 }
