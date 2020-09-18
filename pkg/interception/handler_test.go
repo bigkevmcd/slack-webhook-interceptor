@@ -53,7 +53,7 @@ func TestHandlerProcessingBodySuccessfully(t *testing.T) {
 			}
 			w := httptest.NewRecorder()
 
-			Handler(w, r)
+			MakeHandler("test-secret")(w, r)
 
 			resp := w.Result()
 			if resp.StatusCode != http.StatusOK {
@@ -95,7 +95,7 @@ func TestHandlerProcessingBodyWithErrors(t *testing.T) {
 		}
 		w := httptest.NewRecorder()
 
-		Handler(w, r)
+		MakeHandler("testing")(w, r)
 
 		resp := w.Result()
 		if resp.StatusCode != http.StatusInternalServerError {

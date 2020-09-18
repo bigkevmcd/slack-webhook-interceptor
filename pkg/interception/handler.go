@@ -22,43 +22,45 @@ const (
 	slackPayloadField = "payload"
 )
 
-// TODO validate the shared secret
 // TODO: add some logging.
 
 // Handler processes interception requests.
-func Handler(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseForm()
-	if err != nil {
-		writeErrorResponse(w, fmt.Sprintf("failed to parse form data: %s", err))
-		return
+// The secret is used to authenticate incoming Slack requests.
+func MakeHandler(secret string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		err := r.ParseForm()
+		if err != nil {
+			writeErrorResponse(w, fmt.Sprintf("failed to parse form data: %s", err))
+			return
+		}
+		w.Header().Set("Content-Type", mimeJSON)
+
+		var data interface{}
+
+		switch {
+		case payloadExtract(r):
+			// mark this string as already json encoded so that it doesn't get encoded again (e.g. quotes escaped out)
+			// when it goes through json.Marshal below
+			data = json.RawMessage(r.PostForm.Get(slackPayloadField))
+		case noFlatten(r):
+			data = r.PostForm
+		default:
+			data = flattenMap(r.PostForm)
+		}
+
+		response := map[string]interface{}{prefixFromRequest(r): data}
+		payload, err := json.Marshal(response)
+
+		if err != nil {
+			writeErrorResponse(w, fmt.Sprintf("failed to marshal form data: %s", err.Error()))
+			return
+		}
+
+		fmt.Println("Returning response as:")
+		fmt.Println(string(payload))
+
+		w.Write(payload)
 	}
-	w.Header().Set("Content-Type", mimeJSON)
-
-	var data interface{}
-
-	switch {
-	case payloadExtract(r):
-		// mark this string as already json encoded so that it doesn't get encoded again (e.g. quotes escaped out)
-		// when it goes through json.Marshal below
-		data = json.RawMessage(r.PostForm.Get(slackPayloadField))
-	case noFlatten(r):
-		data = r.PostForm
-	default:
-		data = flattenMap(r.PostForm)
-	}
-
-	response := map[string]interface{}{prefixFromRequest(r): data}
-	payload, err := json.Marshal(response)
-
-	if err != nil {
-		writeErrorResponse(w, fmt.Sprintf("failed to marshal form data: %s", err.Error()))
-		return
-	}
-
-	fmt.Println("Returning response as:")
-	fmt.Println(string(payload))
-
-	w.Write(payload)
 }
 
 func prefixFromRequest(r *http.Request) string {
