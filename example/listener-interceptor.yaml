@@ -19,11 +19,11 @@ spec:
             filter: body.slack.command == '/build'
             overlays:
             - key: slack.repo
-              expression: "split(body.slack.text, ' ')[0]"
+              expression: "body.slack.text.split(' ')[0]"
             - key: slack.sha
-              expression: "split(body.slack.text, ' ')[1]"
+              expression: "body.slack.text.split(' ')[1]"
             - key: slack.command
-              expression: "split(body.slack.command, '/')[1]"
+              expression: "body.slack.command.split('/')[1]"
       bindings:
         - name: task-run-binding
       template:
