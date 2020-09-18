@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/slack-go/slack"
 )
 
 const (
@@ -28,7 +30,18 @@ const (
 // The secret is used to authenticate incoming Slack requests.
 func MakeHandler(secret string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		err := r.ParseForm()
+		sv, err := slack.NewSecretsVerifier(r.Header, secret)
+		if err != nil {
+			writeErrorResponse(w, fmt.Sprintf("failed to create a secrets verifier: %s", err))
+			return
+		}
+		err = sv.Ensure()
+		if err != nil {
+			writeErrorResponse(w, fmt.Sprintf("failed to validate payload: %s", err))
+			return
+		}
+
+		err = r.ParseForm()
 		if err != nil {
 			writeErrorResponse(w, fmt.Sprintf("failed to parse form data: %s", err))
 			return
